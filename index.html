@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarjeta de Perfil GitHub</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
+font-family:Arial,sans-serif;
+background:#0d1117;
+color:white;
+display:flex;
+flex-direction:column;
+align-items:center;
+padding:40px;
+}
+
+.busqueda{
+display:flex;
+gap:10px;
+margin-bottom:20px;
+}
+
+input{
+padding:10px;
+width:250px;
+}
+
+button{
+padding:10px 20px;
+cursor:pointer;
+}
+
+.card{
+display:none;
+background:#161b22;
+padding:20px;
+border-radius:10px;
+max-width:500px;
+width:100%;
+}
+
+.card.visible{
+display:block;
+}
+
+.avatar{
+width:100px;
+border-radius:50%;
+margin-bottom:10px;
+}
+
+.error{
+display:none;
+color:red;
+margin-top:15px;
+}
+
+.error.visible{
+display:block;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Buscador de perfiles GitHub</h1>
+
+<div class="busqueda">
+<input type="text" id="inputUsuario" placeholder="Usuario GitHub">
+<button id="btnBuscar">Buscar</button>
+</div>
+
+<div class="error" id="mensajeError"></div>
+
+<div class="card" id="tarjeta">
+
+<img class="avatar" id="avatar" src="" alt="Avatar">
+
+<h2 id="nombre"></h2>
+
+<p id="usuario"></p>
+
+<p id="bio"></p>
+
+<hr><br>
+
+<p><strong>Repositorios:</strong> <span id="repos"></span></p>
+
+<p><strong>Seguidores:</strong> <span id="seguidores"></span></p>
+
+<p><strong>Siguiendo:</strong> <span id="siguiendo"></span></p>
+
+<br>
+
+<a id="enlace" target="_blank">
+Ver perfil en GitHub
+</a>
+
+</div>
+
+<script>
+
+const TOKEN = 'TU_TOKEN_AQUI';
+
+const btn = document.getElementById('btnBuscar');
+const input = document.getElementById('inputUsuario');
+const tarjeta = document.getElementById('tarjeta');
+const errorDiv = document.getElementById('mensajeError');
+
+async function buscarUsuario(){
+
+const username = input.value.trim();
+
+if(!username) return;
+
+tarjeta.classList.remove('visible');
+errorDiv.classList.remove('visible');
+
+const respuesta = await fetch(
+`https://api.github.com/users/${username}`,
+{
+headers:{
+'Authorization': `Bearer ${TOKEN}`,
+'Accept':'application/vnd.github+json'
+}
+}
+);
+
+if(!respuesta.ok){
+
+if(respuesta.status===404){
+mostrarError('Usuario no encontrado');
+}else{
+mostrarError('Error al consultar GitHub');
+}
+
+return;
+}
+
+const data = await respuesta.json();
+
+document.getElementById('avatar')
+.setAttribute('src',data.avatar_url);
+
+document.getElementById('nombre')
+.textContent = data.name ?? 'Sin nombre';
+
+document.getElementById('usuario')
+.textContent = '@' + data.login;
+
+document.getElementById('bio')
+.textContent = data.bio ?? 'Sin biografía';
+
+document.getElementById('repos')
+.textContent = data.public_repos;
+
+document.getElementById('seguidores')
+.textContent = data.followers;
+
+document.getElementById('siguiendo')
+.textContent = data.following;
+
+document.getElementById('enlace')
+.setAttribute('href',data.html_url);
+
+tarjeta.classList.add('visible');
+}
+
+function mostrarError(msg){
+errorDiv.textContent = msg;
+errorDiv.classList.add('visible');
+}
+
+btn.addEventListener('click',buscarUsuario);
+
+input.addEventListener('keydown',(e)=>{
+if(e.key==='Enter'){
+buscarUsuario();
+}
+});
+
+</script>
+
+</body>
+</html>
